@@ -1,0 +1,122 @@
+<div class="camera-app">
+  <header class="app-header">
+    <h1>{{ title }}</h1>
+  </header>
+
+  <main class="app-main">
+    <!-- エラーメッセージ -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Lambda URL入力 -->
+    <section class="lambda-config">
+      <h2>AWS Lambda設定</h2>
+      <div class="input-group">
+        <label for="lambdaUrl">Lambda関数URL:</label>
+        <input
+          type="url"
+          id="lambdaUrl"
+          [(ngModel)]="lambdaUrl"
+          placeholder="https://your-lambda-url.amazonaws.com/..."
+          class="url-input">
+      </div>
+    </section>
+
+    <!-- カメラコントロール -->
+    <section class="camera-controls">
+      <h2>カメラ操作</h2>
+      <div class="button-group">
+        <button
+          *ngIf="!isCameraActive"
+          (click)="startCamera()"
+          class="btn btn-primary">
+          カメラを起動
+        </button>
+
+        <button
+          *ngIf="isCameraActive"
+          (click)="stopCamera()"
+          class="btn btn-secondary">
+          カメラを停止
+        </button>
+
+        <button
+          *ngIf="isCameraActive"
+          (click)="capturePhoto()"
+          [disabled]="isCapturing || capturedImages.length >= 1"
+          class="btn btn-success">
+          撮影 ({{ capturedImages.length }}/1)
+        </button>
+      </div>
+    </section>
+
+    <!-- カメラプレビュー -->
+    <section class="camera-preview" *ngIf="isCameraActive">
+      <h2>カメラプレビュー</h2>
+      <div class="video-container">
+        <video
+          #videoElement
+          autoplay
+          playsinline
+          muted
+          class="video-preview"
+          (loadedmetadata)="onVideoLoaded()"
+          (error)="onVideoError($event)">
+        </video>
+      </div>
+      <div class="camera-info" *ngIf="videoElement">
+        <small>
+          ビデオ状態: {{ getVideoStatus() }} |
+          解像度: {{ getVideoResolution() }}
+        </small>
+      </div>
+    </section>
+
+    <!-- 撮影された画像のプレビュー -->
+    <section class="captured-images" *ngIf="capturedImages.length > 0">
+      <h2>撮影済み画像 ({{ capturedImages.length }}/1)</h2>
+      <div class="image-gallery">
+        <div *ngFor="let image of capturedImages; let i = index" class="image-item">
+          <img [src]="image.dataUrl" [alt]="'撮影画像'" class="captured-image">
+          <div class="image-controls">
+            <span class="image-number">1</span>
+            <button
+              (click)="retakePhoto(image.id)"
+              class="btn btn-warning btn-small">
+              再撮影
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 送信ボタンとクリアボタン -->
+    <section class="action-buttons" *ngIf="capturedImages.length > 0">
+      <div class="button-group">
+        <button
+          (click)="sendToLambda()"
+          [disabled]="!canSendToLambda()"
+          class="btn btn-primary btn-large">
+          <span *ngIf="!isProcessing">Lambda関数に送信</span>
+          <span *ngIf="isProcessing">⏳ 処理中...</span>
+        </button>
+
+        <button
+          (click)="clearAll()"
+          [disabled]="isProcessing"
+          class="btn btn-secondary">
+          すべてクリア
+        </button>
+      </div>
+    </section>
+
+    <!-- 抽出されたテキストの表示 -->
+    <section class="extracted-text" *ngIf="extractedText">
+      <h2>抽出されたテキスト</h2>
+      <div class="text-output">
+        {{ extractedText }}
+      </div>
+    </section>
+  </main>
+</div>
