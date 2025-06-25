@@ -221,7 +221,9 @@ section h2 {
 .image-gallery {
   display: flex;
   justify-content: center;
+  gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 /* 小さい画像アイテム */
@@ -245,6 +247,34 @@ section h2 {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* 画像番号表示 */
+.image-number {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(102, 126, 234, 0.9);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  z-index: 3;
+}
+
+/* ギャラリー説明テキスト */
+.gallery-instruction {
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 /* 画像拡大モーダル */
@@ -336,25 +366,34 @@ section h2 {
   .app-main {
     padding: 1rem;
   }
-  
+
   .button-group {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .modal-content {
     max-width: 95vw;
     margin: 1rem;
   }
-  
+
   .modal-actions {
     flex-direction: column;
   }
-  
+
+  .image-gallery {
+    gap: 0.5rem;
+  }
+
+  .image-item-small {
+    width: 140px;
+    height: 105px;
+  }
+
   section {
     padding: 1rem;
   }
@@ -364,7 +403,7 @@ section h2 {
   .app-main {
     padding: 0.5rem;
   }
-  
+
   section {
     padding: 0.8rem;
   }

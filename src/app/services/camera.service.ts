@@ -111,7 +111,7 @@ export class CameraService {
     return capturedImage;
   }
   addCapturedImage(image: CapturedImage): void {
-    if (this.capturedImages.length < 1) {
+    if (this.capturedImages.length < 3) {
       this.capturedImages.push(image);
       this.capturedImagesSubject.next([...this.capturedImages]);
     }
@@ -142,13 +142,14 @@ export class CameraService {
     }
   }
   async sendImagesToLambda(lambdaUrl: string): Promise<any> {
-    if (this.capturedImages.length !== 1) {
-      throw new Error('1枚の写真が必要です');
+    if (this.capturedImages.length !== 3) {
+      throw new Error('3枚の写真が必要です');
     }
 
     const formData = new FormData();
-    const image = this.capturedImages[0];
-    formData.append('image', image.blob, 'photo.jpg');
+    this.capturedImages.forEach((image, index) => {
+      formData.append(`image${index + 1}`, image.blob, `photo${index + 1}.jpg`);
+    });
 
     try {
       const response = await fetch(lambdaUrl, {

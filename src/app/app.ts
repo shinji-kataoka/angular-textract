@@ -111,7 +111,7 @@ export class App implements OnDestroy {
   }
 
   canSendToLambda(): boolean {
-    return this.capturedImages.length === 1 && !this.isProcessing && this.lambdaUrl.trim().length > 0;
+    return this.capturedImages.length === 3 && !this.isProcessing && this.lambdaUrl.trim().length > 0;
   }
 
   // 画像モーダル関連
@@ -167,8 +167,8 @@ export class App implements OnDestroy {
   }
 
   private validateSendConditions(): boolean {
-    if (this.capturedImages.length !== 1) {
-      this.errorMessage = '1枚の写真を撮影してください。';
+    if (this.capturedImages.length !== 3) {
+      this.errorMessage = '3枚の写真を撮影してください。';
       return false;
     }
 

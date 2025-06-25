@@ -48,7 +48,7 @@
         <!-- 撮影ボタン -->
         <button
           (click)="capturePhoto()"
-          [disabled]="isCapturing || capturedImages.length >= 1"
+          [disabled]="isCapturing || capturedImages.length >= 3"
           class="capture-button"
           title="撮影">
         </button>
@@ -63,11 +63,16 @@
 
     <!-- 撮影された画像のプレビュー -->
     <section class="captured-images" *ngIf="capturedImages.length > 0">
-      <h2>撮影済み画像</h2>
+      <h2>撮影済み画像 ({{ capturedImages.length }}/3)</h2>
       <div class="image-gallery">
         <div *ngFor="let image of capturedImages; let i = index" class="image-item-small">
-          <img [src]="image.dataUrl" [alt]="'撮影画像'" class="captured-image-small" (click)="openImageModal(image)">
-
+          <img
+            [src]="image.dataUrl"
+            [alt]="'撮影画像 ' + (i + 1)"
+            class="captured-image-small"
+            (click)="openImageModal(image)"
+          >
+          <div class="image-number">{{ i + 1 }}</div>
           <button
             class="small-retake-button"
             (click)="retakePhotoAndCloseModal(image.id)"
@@ -76,6 +81,7 @@
           </button>
         </div>
       </div>
+      <p class="gallery-instruction">クリックして拡大表示</p>
     </section>
 
     <!-- 画像拡大モーダル -->
