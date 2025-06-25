@@ -12,134 +12,132 @@ import { CameraService, CapturedImage } from './services/camera.service';
 export class App implements OnDestroy {
   @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
 
-  title = '文字認識システム';
-
   // カメラ関連の状態
   isCameraActive = false;
   isCapturing = false;
 
   // 撮影された画像
   capturedImages: CapturedImage[] = [];
+  selectedImage: CapturedImage | null = null;
 
   // API関連
-  lambdaUrl = ''; // AWS Lambda関数のURL
+  lambdaUrl = '';
   isProcessing = false;
   extractedText = '';
   errorMessage = '';
 
   constructor(private cameraService: CameraService) {
-    // 撮影された画像の監視
     this.cameraService.capturedImages$.subscribe(images => {
       this.capturedImages = images;
     });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.stopCamera();
   }
-  async startCamera() {
+  async startCamera(): Promise<void> {
     try {
-      this.errorMessage = '';
+      this.clearMessages();
       this.isCameraActive = true;
 
-      // カメラサービスからstreamを取得
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'environment' // 背面カメラを優先
+          facingMode: 'environment'
         },
         audio: false
       });
 
-      // ビデオ要素にstreamを設定
       if (this.videoElement) {
         this.videoElement.nativeElement.srcObject = stream;
         this.videoElement.nativeElement.play();
       }
 
-      // サービスにもstreamを設定
       await this.cameraService.setStream(stream);
-
     } catch (error) {
-      this.errorMessage = 'カメラの起動に失敗しました。カメラへのアクセス許可を確認してください。';
+      this.handleError('カメラの起動に失敗しました。カメラへのアクセス許可を確認してください。', error);
       this.isCameraActive = false;
-      console.error('Camera start error:', error);
     }
   }
 
-  stopCamera() {
+  stopCamera(): void {
     this.cameraService.stopCamera();
+    this.cameraService.clearCapturedImages();
+    this.clearMessages();
+    this.selectedImage = null;
     this.isCameraActive = false;
-  }  capturePhoto() {
+  }  capturePhoto(): void {
     try {
       this.isCapturing = true;
-      this.errorMessage = '';
+      this.clearMessages();
 
-      // ビデオ要素を直接渡す
       const videoElement = this.videoElement?.nativeElement;
       const capturedImage = this.cameraService.capturePhoto(videoElement);
       if (capturedImage) {
         this.cameraService.addCapturedImage(capturedImage);
       }
     } catch (error) {
-      this.errorMessage = '写真の撮影に失敗しました。';
-      console.error('Capture error:', error);
+      this.handleError('写真の撮影に失敗しました。', error);
     } finally {
       this.isCapturing = false;
     }
   }
-  retakePhoto(imageId: number) {
-    // 現在の写真を削除
+
+  retakePhoto(imageId: number): void {
     this.cameraService.removeCapturedImage(imageId);
-    // エラーメッセージと抽出結果をクリア
-    this.errorMessage = '';
-    this.extractedText = '';
+    this.clearMessages();
   }
 
-  async sendToLambda() {
-    if (this.capturedImages.length !== 1) {
-      this.errorMessage = '1枚の写真を撮影してください。';
-      return;
-    }
-
-    if (!this.lambdaUrl.trim()) {
-      this.errorMessage = 'AWS Lambda関数のURLを入力してください。';
-      return;
-    }
+  async sendToLambda(): Promise<void> {
+    if (!this.validateSendConditions()) return;
 
     try {
       this.isProcessing = true;
-      this.errorMessage = '';
-      this.extractedText = '';
+      this.clearMessages();
 
       const result = await this.cameraService.sendImagesToLambda(this.lambdaUrl);
       this.extractedText = result.extractedText || result.text || JSON.stringify(result);
-
     } catch (error) {
-      this.errorMessage = 'Lambda関数への送信に失敗しました。URLやネットワーク接続を確認してください。';
-      console.error('Lambda send error:', error);
+      this.handleError('Lambda関数への送信に失敗しました。URLやネットワーク接続を確認してください。', error);
     } finally {
       this.isProcessing = false;
     }
   }
 
-  clearAll() {
+  clearAll(): void {
     this.cameraService.clearCapturedImages();
-    this.extractedText = '';
-    this.errorMessage = '';
+    this.clearMessages();
   }
 
   canSendToLambda(): boolean {
     return this.capturedImages.length === 1 && !this.isProcessing && this.lambdaUrl.trim().length > 0;
   }
 
-  // デバッグ用メソッド
-  onVideoLoaded() {
+  // 画像モーダル関連
+  openImageModal(image: CapturedImage): void {
+    this.selectedImage = image;
+  }
+
+  closeImageModal(): void {
+    this.selectedImage = null;
+  }
+
+  confirmImage(): void {
+    this.closeImageModal();
+  }
+
+  retakePhotoAndCloseModal(imageId: number): void {
+    this.closeImageModal();
+    this.retakePhoto(imageId);
+  }
+
+  // ビデオ関連（デバッグ用）
+  onVideoLoaded(): void {
     console.log('Video metadata loaded');
   }
 
-  onVideoError(event: any) {
+  onVideoError(event: any): void {
     console.error('Video error:', event);
     this.errorMessage = 'ビデオの読み込みエラーが発生しました。';
   }
@@ -155,5 +153,30 @@ export class App implements OnDestroy {
     if (!this.videoElement?.nativeElement) return 'N/A';
     const video = this.videoElement.nativeElement;
     return `${video.videoWidth}x${video.videoHeight}`;
+  }
+
+  // プライベートヘルパーメソッド
+  private clearMessages(): void {
+    this.errorMessage = '';
+    this.extractedText = '';
+  }
+
+  private handleError(message: string, error: any): void {
+    this.errorMessage = message;
+    console.error(message, error);
+  }
+
+  private validateSendConditions(): boolean {
+    if (this.capturedImages.length !== 1) {
+      this.errorMessage = '1枚の写真を撮影してください。';
+      return false;
+    }
+
+    if (!this.lambdaUrl.trim()) {
+      this.errorMessage = 'AWS Lambda関数のURLを入力してください。';
+      return false;
+    }
+
+    return true;
   }
 }

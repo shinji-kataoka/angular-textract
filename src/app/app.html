@@ -1,7 +1,4 @@
 <div class="camera-app">
-  <header class="app-header">
-    <h1>{{ title }}</h1>
-  </header>
 
   <main class="app-main">
     <!-- エラーメッセージ -->
@@ -9,7 +6,7 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Lambda URL入力 -->
+    <!-- Lambda URL入力
     <section class="lambda-config">
       <h2>AWS Lambda設定</h2>
       <div class="input-group">
@@ -21,39 +18,16 @@
           placeholder="https://your-lambda-url.amazonaws.com/..."
           class="url-input">
       </div>
-    </section>
+    </section> -->
 
     <!-- カメラコントロール -->
-    <section class="camera-controls">
-      <h2>カメラ操作</h2>
-      <div class="button-group">
-        <button
-          *ngIf="!isCameraActive"
-          (click)="startCamera()"
-          class="btn btn-primary">
-          カメラを起動
-        </button>
+    <button (click)="startCamera()" class="btn btn-primary">
+      カメラを起動
+    </button>
 
-        <button
-          *ngIf="isCameraActive"
-          (click)="stopCamera()"
-          class="btn btn-secondary">
-          カメラを停止
-        </button>
-
-        <button
-          *ngIf="isCameraActive"
-          (click)="capturePhoto()"
-          [disabled]="isCapturing || capturedImages.length >= 1"
-          class="btn btn-success">
-          撮影 ({{ capturedImages.length }}/1)
-        </button>
-      </div>
-    </section>
 
     <!-- カメラプレビュー -->
     <section class="camera-preview" *ngIf="isCameraActive">
-      <h2>カメラプレビュー</h2>
       <div class="video-container">
         <video
           #videoElement
@@ -64,6 +38,20 @@
           (loadedmetadata)="onVideoLoaded()"
           (error)="onVideoError($event)">
         </video>
+        <!-- キャンセルボタン -->
+        <button
+          (click)="stopCamera()"
+          class="cancel-button"
+          title="カメラを停止">
+          ✕
+        </button>
+        <!-- 撮影ボタン -->
+        <button
+          (click)="capturePhoto()"
+          [disabled]="isCapturing || capturedImages.length >= 1"
+          class="capture-button"
+          title="撮影">
+        </button>
       </div>
       <div class="camera-info" *ngIf="videoElement">
         <small>
@@ -75,21 +63,41 @@
 
     <!-- 撮影された画像のプレビュー -->
     <section class="captured-images" *ngIf="capturedImages.length > 0">
-      <h2>撮影済み画像 ({{ capturedImages.length }}/1)</h2>
+      <h2>撮影済み画像</h2>
       <div class="image-gallery">
-        <div *ngFor="let image of capturedImages; let i = index" class="image-item">
-          <img [src]="image.dataUrl" [alt]="'撮影画像'" class="captured-image">
-          <div class="image-controls">
-            <span class="image-number">1</span>
-            <button
-              (click)="retakePhoto(image.id)"
-              class="btn btn-warning btn-small">
-              再撮影
-            </button>
-          </div>
+        <div *ngFor="let image of capturedImages; let i = index" class="image-item-small">
+          <img [src]="image.dataUrl" [alt]="'撮影画像'" class="captured-image-small" (click)="openImageModal(image)">
+
+          <button
+            class="small-retake-button"
+            (click)="retakePhotoAndCloseModal(image.id)"
+            title="再撮影">
+            再撮影
+          </button>
         </div>
       </div>
     </section>
+
+    <!-- 画像拡大モーダル -->
+    <div class="image-modal" *ngIf="selectedImage" (click)="closeImageModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-image-container">
+          <img [src]="selectedImage.dataUrl" [alt]="'撮影画像'" class="modal-image">
+        </div>
+        <div class="modal-actions">
+          <button
+            (click)="retakePhotoAndCloseModal(selectedImage.id)"
+            class="btn btn-warning">
+            再撮影
+          </button>
+          <button
+            (click)="confirmImage()"
+            class="btn btn-success">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- 送信ボタンとクリアボタン -->
     <section class="action-buttons" *ngIf="capturedImages.length > 0">
@@ -98,8 +106,8 @@
           (click)="sendToLambda()"
           [disabled]="!canSendToLambda()"
           class="btn btn-primary btn-large">
-          <span *ngIf="!isProcessing">Lambda関数に送信</span>
-          <span *ngIf="isProcessing">⏳ 処理中...</span>
+          <span *ngIf="!isProcessing">送信</span>
+          <span *ngIf="isProcessing">処理中...</span>
         </button>
 
         <button
