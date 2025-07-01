@@ -6,25 +6,10 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Lambda URL入力
-    <section class="lambda-config">
-      <h2>AWS Lambda設定</h2>
-      <div class="input-group">
-        <label for="lambdaUrl">Lambda関数URL:</label>
-        <input
-          type="url"
-          id="lambdaUrl"
-          [(ngModel)]="lambdaUrl"
-          placeholder="https://your-lambda-url.amazonaws.com/..."
-          class="url-input">
-      </div>
-    </section> -->
-
     <!-- カメラコントロール -->
     <button (click)="startCamera()" class="btn btn-primary">
       カメラを起動
     </button>
-
 
     <!-- カメラプレビュー -->
     <section class="camera-preview" *ngIf="isCameraActive">
@@ -109,8 +94,8 @@
     <section class="action-buttons" *ngIf="capturedImages.length > 0">
       <div class="button-group">
         <button
-          (click)="sendToLambda()"
-          [disabled]="!canSendToLambda()"
+          (click)="sendToTextract()"
+          [disabled]="!canProcessWithTextract()"
           class="btn btn-primary btn-large">
           <span *ngIf="!isProcessing">送信</span>
           <span *ngIf="isProcessing">処理中...</span>
@@ -125,12 +110,50 @@
       </div>
     </section>
 
-    <!-- 抽出されたテキストの表示 -->
-    <section class="extracted-text" *ngIf="extractedText">
-      <h2>抽出されたテキスト</h2>
-      <div class="text-output">
-        {{ extractedText }}
+    <!-- 抽出されたシリアル番号の表示 -->
+    <section class="serial-numbers" *ngIf="extractedSerialNumbers.length > 0">
+      <h2>抽出されたシリアル番号</h2>
+      <div class="serial-number-list">
+        <div 
+          *ngFor="let item of extractedSerialNumbers; let i = index" 
+          class="serial-number-item"
+          [class.selected]="selectedSerialNumber === item.serialNumber">
+          <div class="serial-info">
+            <span class="serial-display">画像{{ item.imageIndex + 1 }}: {{ item.serialNumber }}</span>
+          </div>
+          <button 
+            (click)="selectSerialNumber(item.serialNumber)"
+            class="btn btn-sm btn-select"
+            [disabled]="selectedSerialNumber === item.serialNumber">
+            {{ selectedSerialNumber === item.serialNumber ? '選択済み' : '選択' }}
+          </button>
+        </div>
       </div>
     </section>
+
+    <!-- シリアル番号入力フォーム -->
+    <section class="serial-form" *ngIf="extractedSerialNumbers.length > 0">
+      <h2>シリアル番号フォーム</h2>
+      <div class="form-group">
+        <label for="serialNumberInput">選択されたシリアル番号:</label>
+        <input
+          type="text"
+          id="serialNumberInput"
+          [(ngModel)]="serialNumberInput"
+          placeholder="シリアル番号を選択または入力してください"
+          class="serial-input">
+        <div class="form-buttons">
+          <button
+            (click)="clearForm()"
+            class="btn btn-secondary btn-sm">
+            クリア
+          </button>
+        </div>
+      </div>
+      <div class="selected-info" *ngIf="selectedSerialNumber">
+        <p><strong>現在選択中:</strong> {{ selectedSerialNumber }}</p>
+      </div>
+    </section>
+
   </main>
 </div>

@@ -361,52 +361,136 @@ section h2 {
   font-size: 0.8rem;
 }
 
-/* レスポンシブデザイン */
-@media (max-width: 768px) {
-  .app-main {
-    padding: 1rem;
-  }
-
-  .button-group {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .modal-content {
-    max-width: 95vw;
-    margin: 1rem;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .image-gallery {
-    gap: 0.5rem;
-  }
-
-  .image-item-small {
-    width: 140px;
-    height: 105px;
-  }
-
-  section {
-    padding: 1rem;
-  }
+/* シリアル番号セクション */
+.serial-numbers {
+  background: rgba(232, 245, 233, 0.95);
+  border-left: 4px solid #4caf50;
 }
 
-@media (max-width: 480px) {
-  .app-main {
-    padding: 0.5rem;
-  }
+.serial-number-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-  section {
-    padding: 0.8rem;
-  }
+.serial-number-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.serial-number-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.serial-number-item.selected {
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid #4caf50;
+}
+
+.serial-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.serial-display {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #2e7d32;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.btn-select {
+  min-width: 80px;
+}
+
+/* シリアル番号フォーム */
+.serial-form {
+  background: rgba(227, 242, 253, 0.95);
+  border-left: 4px solid #2196f3;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.serial-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.serial-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.form-buttons {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.selected-info {
+  background: rgba(33, 150, 243, 0.1);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  border-left: 3px solid #2196f3;
+}
+
+.selected-info p {
+  margin: 0;
+  color: #1976d2;
+}
+
+/* 抽出されたテキスト表示の改善 */
+.extracted-text .text-output {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.extracted-text pre {
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ボタンサイズの追加 */
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
 }
 
 /* ローディングアニメーション */

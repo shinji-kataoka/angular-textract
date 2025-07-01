@@ -2,6 +2,8 @@ import { Component, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CameraService, CapturedImage } from './services/camera.service';
+import { TextractService, SerialNumberResult, TextractResponse } from './services/textract.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -20,16 +22,30 @@ export class App implements OnDestroy {
   capturedImages: CapturedImage[] = [];
   selectedImage: CapturedImage | null = null;
 
-  // API関連
-  lambdaUrl = '';
+  // AWS認証情報
+  awsAccessKeyId = '';
+  awsSecretAccessKey = '';
+
+  // Textract関連
   isProcessing = false;
   extractedText = '';
+  extractedSerialNumbers: SerialNumberResult[] = [];
   errorMessage = '';
 
-  constructor(private cameraService: CameraService) {
+  // フォーム関連
+  selectedSerialNumber = '';
+  serialNumberInput = '';
+
+  constructor(
+    private cameraService: CameraService,
+    private textractService: TextractService
+  ) {
     this.cameraService.capturedImages$.subscribe(images => {
       this.capturedImages = images;
     });
+    
+    // 環境変数から認証情報を自動設定
+    this.loadAWSCredentialsFromEnvironment();
   }
 
   ngOnDestroy(): void {
@@ -89,29 +105,68 @@ export class App implements OnDestroy {
     this.clearMessages();
   }
 
-  async sendToLambda(): Promise<void> {
-    if (!this.validateSendConditions()) return;
-
-    try {
-      this.isProcessing = true;
-      this.clearMessages();
-
-      const result = await this.cameraService.sendImagesToLambda(this.lambdaUrl);
-      this.extractedText = result.extractedText || result.text || JSON.stringify(result);
-    } catch (error) {
-      this.handleError('Lambda関数への送信に失敗しました。URLやネットワーク接続を確認してください。', error);
-    } finally {
-      this.isProcessing = false;
-    }
-  }
-
   clearAll(): void {
     this.cameraService.clearCapturedImages();
     this.clearMessages();
   }
 
-  canSendToLambda(): boolean {
-    return this.capturedImages.length === 3 && !this.isProcessing && this.lambdaUrl.trim().length > 0;
+  canProcessWithTextract(): boolean {
+    return this.capturedImages.length === 3 && !this.isProcessing;
+  }
+
+  // 送信ボタン用のメソッド（既存のsendToLambdaを置き換え）
+  async sendToTextract(): Promise<void> {
+    if (!this.validateTextractConditions()) return;
+
+    try {
+      this.isProcessing = true;
+      this.clearMessages();
+
+      // AWS認証情報を設定
+      this.textractService.configureAWS(this.awsAccessKeyId, this.awsSecretAccessKey);
+
+      // Textractでテキスト抽出
+      const result: TextractResponse = await this.textractService.extractTextFromImages(this.capturedImages);
+      
+      if (result.success) {
+        this.extractedText = result.allText;
+        this.extractedSerialNumbers = result.extractedSerialNumbers;
+      } else {
+        this.errorMessage = result.error || 'テキスト抽出に失敗しました';
+      }
+
+    } catch (error) {
+      this.handleError('Textract処理に失敗しました。AWS認証情報やネットワーク接続を確認してください。', error);
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  async processWithTextract(): Promise<void> {
+    if (!this.validateTextractConditions()) return;
+
+    try {
+      this.isProcessing = true;
+      this.clearMessages();
+
+      // AWS認証情報を設定
+      this.textractService.configureAWS(this.awsAccessKeyId, this.awsSecretAccessKey);
+
+      // Textractでテキスト抽出
+      const result: TextractResponse = await this.textractService.extractTextFromImages(this.capturedImages);
+      
+      if (result.success) {
+        this.extractedText = result.allText;
+        this.extractedSerialNumbers = result.extractedSerialNumbers;
+      } else {
+        this.errorMessage = result.error || 'テキスト抽出に失敗しました';
+      }
+
+    } catch (error) {
+      this.handleError('Textract処理に失敗しました。AWS認証情報やネットワーク接続を確認してください。', error);
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
   // 画像モーダル関連
@@ -155,10 +210,23 @@ export class App implements OnDestroy {
     return `${video.videoWidth}x${video.videoHeight}`;
   }
 
+  // シリアル番号選択とフォーム挿入
+  selectSerialNumber(serialNumber: string): void {
+    this.selectedSerialNumber = serialNumber;
+    this.serialNumberInput = serialNumber;
+  }
+
+  clearForm(): void {
+    this.serialNumberInput = '';
+    this.selectedSerialNumber = '';
+  }
+
   // プライベートヘルパーメソッド
   private clearMessages(): void {
     this.errorMessage = '';
     this.extractedText = '';
+    this.extractedSerialNumbers = [];
+    this.selectedSerialNumber = '';
   }
 
   private handleError(message: string, error: any): void {
@@ -166,17 +234,34 @@ export class App implements OnDestroy {
     console.error(message, error);
   }
 
-  private validateSendConditions(): boolean {
+  private validateTextractConditions(): boolean {
     if (this.capturedImages.length !== 3) {
       this.errorMessage = '3枚の写真を撮影してください。';
       return false;
     }
 
-    if (!this.lambdaUrl.trim()) {
-      this.errorMessage = 'AWS Lambda関数のURLを入力してください。';
+    if (!this.awsAccessKeyId.trim()) {
+      this.errorMessage = 'AWS認証情報が設定されていません。環境設定を確認してください。';
+      return false;
+    }
+
+    if (!this.awsSecretAccessKey.trim()) {
+      this.errorMessage = 'AWS認証情報が設定されていません。環境設定を確認してください。';
       return false;
     }
 
     return true;
+  }
+
+  // AWS認証情報を環境変数から読み込み
+  private loadAWSCredentialsFromEnvironment(): void {
+    // environment.tsから認証情報を読み込み
+    if (environment.aws.accessKeyId && environment.aws.secretAccessKey) {
+      this.awsAccessKeyId = environment.aws.accessKeyId;
+      this.awsSecretAccessKey = environment.aws.secretAccessKey;
+      console.log('AWS認証情報が環境設定から読み込まれました');
+    } else {
+      console.log('環境設定にAWS認証情報が見つかりませんでした。手動で入力してください。');
+    }
   }
 }
