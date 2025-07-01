@@ -1,202 +1,196 @@
-# 文字認識システム (Camera OCR App)
+# Angular Textract - シリアル番号抽出アプリ
 
-ブラウザのカメラを使用して写真を撮影し、AWS Lambdaで文字認識（OCR）を行うAngularアプリケーションです。
+AWS Textractを使用して画像からシリアル番号を自動抽出するAngularアプリケーションです。
 
-## 概要
+## 🎯 主な機能
 
-このアプリケーションは以下の機能を提供します：
-- ブラウザでのカメラアクセス
-- リアルタイムカメラプレビュー
-- 写真撮影機能
-- AWS Lambda関数への画像送信
-- OCR（光学文字認識）による文字抽出
+- **📷 写真撮影**: カメラで3枚の画像を撮影
+- **🔍 テキスト抽出**: AWS Textractを使用してOCR処理
+- **🏷️ シリアル番号抽出**: 特定のキーワード後のシリアル番号を自動抽出
+- **✏️ 手動選択**: 抽出されたシリアル番号から任意選択
+- **📝 フォーム入力**: 選択したシリアル番号をフォームに挿入
 
-## 技術スタック
+## 📋 対応するシリアル番号フォーマット
 
-- **フレームワーク**: Angular 20.0.2
-- **言語**: TypeScript
-- **UI**: HTML5 Canvas, WebRTC API
-- **バックエンド**: AWS Lambda
-- **認証**: なし（直接URL指定）
+以下のキーワードの後にあるシリアル番号を抽出します：
 
-## プロジェクト構成
+### サポートキーワード
+- `Serial No.`, `Serial No`, `serial no`, `serial n`
+- `No.`, `No`, `no`
+- `Number`, `number`
+
+### サポート文字
+- **英数字**: A-Z, a-z, 0-9
+- **ハイフン**: -
+
+### 抽出例
+```
+Serial No: ABC123       → ABC123
+serial no. XYZ-789     → XYZ-789
+No - TEST-001-A        → TEST-001-A
+Number: 12345-ABCD     → 12345-ABCD
+```
+
+## 🚀 セットアップ
+
+### 1. リポジトリのクローン
+```bash
+git clone <repository-url>
+cd angular-textract
+```
+
+### 2. 依存関係のインストール
+```bash
+npm install
+```
+
+### 3. AWS認証情報の設定
+
+環境設定ファイルを作成：
+```bash
+cp src/environments/environment.example.ts src/environments/environment.ts
+```
+
+`src/environments/environment.ts`を編集：
+```typescript
+export const environment = {
+  production: false,
+  aws: {
+    accessKeyId: 'your_actual_access_key',
+    secretAccessKey: 'your_actual_secret_key',
+    region: 'ap-northeast-2'
+  }
+};
+```
+
+### 4. アプリケーションの起動
+```bash
+ng serve
+```
+
+## 📱 使用方法
+
+1. **写真撮影**
+   - 「カメラを起動」ボタンをクリック
+   - 3枚の画像を撮影（シリアル番号が含まれる部分を明確に撮影）
+
+2. **テキスト抽出**
+   - 3枚撮影完了後、「送信」ボタンをクリック
+   - AWS Textractがテキスト抽出を実行
+
+3. **シリアル番号選択**
+   - 抽出されたシリアル番号が「画像X: シリアル番号」形式で表示
+   - 任意のシリアル番号の「選択」ボタンをクリック
+
+4. **フォーム入力**
+   - 選択したシリアル番号がフォームに自動入力
+   - 必要に応じて手動編集も可能
+
+## 🏗️ プロジェクト構造
 
 ```
 src/
 ├── app/
-│   ├── app.ts              # メインコンポーネント
-│   ├── app.html            # メインテンプレート
-│   ├── app.css             # メインスタイル
-│   ├── app.config.ts       # アプリケーション設定
-│   └── services/
-│       └── camera.service.ts  # カメラ操作サービス
-├── index.html              # エントリーポイント
-├── main.ts                 # アプリケーション起動
-└── styles.css              # グローバルスタイル
+│   ├── services/
+│   │   ├── camera.service.ts         # カメラ操作
+│   │   └── textract.service.ts       # AWS Textract処理
+│   ├── app.ts                        # メインコンポーネント
+│   ├── app.html                      # UIテンプレート
+│   └── app.css                       # スタイル
+├── environments/
+│   ├── environment.example.ts        # 環境設定テンプレート
+│   └── environment.ts                # 実際の環境設定（Git除外）
+└── ...
 ```
 
-## 主要機能の詳細
+## 🔧 技術スタック
 
-### 1. カメラ機能 (`CameraService`)
+- **Frontend**: Angular 20+
+- **OCR**: AWS Textract
+- **言語**: TypeScript
+- **スタイル**: CSS
+- **パッケージマネージャー**: npm
 
-#### **MediaStream取得**
-```typescript
-const stream = await navigator.mediaDevices.getUserMedia({
-  video: {
-    width: { ideal: 1280 },
-    height: { ideal: 720 },
-    facingMode: 'environment' // 背面カメラを優先
-  },
-  audio: false
-});
+## 🔒 セキュリティ
+
+### Git除外設定
+以下のファイルはGitHubにアップロードされません：
+
+```gitignore
+.env
+.env.local
+.env.*.local
+src/environments/environment.ts
+src/environments/environment.prod.ts
 ```
 
-#### **写真撮影プロセス**
-1. HTMLVideoElementからフレームをキャプチャ
-2. HTMLCanvasElementに描画
-3. JPEG形式（品質80%）でエンコード
-4. Base64 DataURLとBlobの両方を生成
+### AWS認証情報管理
+- 開発環境: 環境変数ファイル（`.env`）
+- 本番環境: デプロイメントプラットフォームの環境変数設定
 
-#### **画像データ構造**
-```typescript
-interface CapturedImage {
-  id: number;        // 一意識別子
-  dataUrl: string;   // Base64エンコードされた画像データ
-  blob: Blob;        // バイナリ形式（送信用）
-  timestamp: Date;   // 撮影時刻
-}
-```
-
-### 2. メインコンポーネント (`App`)
-
-#### **状態管理**
-- `isCameraActive`: カメラの動作状態
-- `isCapturing`: 撮影処理中フラグ
-- `capturedImages`: 撮影済み画像配列（最大1枚）
-- `isProcessing`: Lambda処理中フラグ
-- `extractedText`: 抽出されたテキスト
-- `errorMessage`: エラーメッセージ
-
-#### **主要メソッド**
-
-**カメラ開始**
-```typescript
-async startCamera() {
-  // MediaDevices APIでカメラストリーム取得
-  // HTMLVideoElementに設定
-  // CameraServiceにストリーム渡し
-}
-```
-
-**写真撮影**
-```typescript
-capturePhoto() {
-  // ビデオ要素からフレーム撮影
-  // CapturedImageオブジェクト生成
-  // サービスに画像追加
-}
-```
-
-**Lambda送信**
-```typescript
-async sendToLambda() {
-  // FormDataでmultipart/form-data作成
-  // 'image'フィールドにBlob添付
-  // POST リクエストでLambda関数実行
-}
-```
-
-### 3. 画像処理フロー
+## 📊 AWS Textract処理フロー
 
 ```
-カメラストリーム → HTMLVideoElement → HTMLCanvasElement →
-DataURL (表示用) + Blob (送信用) → FormData → AWS Lambda
+画像撮影 → Base64変換 → バイナリ変換 → Textract送信
+    ↓
+テキスト抽出 → 行単位結合 → 正規表現マッチ → シリアル番号抽出
+    ↓
+UI表示 → 手動選択 → フォーム入力
 ```
 
-#### **画像変換詳細**
-1. **キャンバス描画**: `context.drawImage(video, 0, 0, width, height)`
-2. **JPEG変換**: `canvas.toDataURL('image/jpeg', 0.8)`
-3. **Blob生成**: Base64デコード → ArrayBuffer → Uint8Array → Blob
+## ⚙️ 環境要件
 
-### 4. AWS Lambda連携
+- **Node.js**: 18.x以上
+- **Angular CLI**: 20.x以上
+- **AWS Account**: Textractサービス利用可能
+- **ブラウザ**: カメラアクセス対応
 
-#### **送信データ形式**
-- **Content-Type**: `multipart/form-data`
-- **フィールド名**: `image`
-- **ファイル名**: `photo.jpg`
-- **MIME Type**: `image/jpeg`
-
-#### **期待するレスポンス**
-```json
-{
-  "extractedText": "認識されたテキスト",
-  "text": "代替フィールド",
-  // その他のLambda固有フィールド
-}
-```
-
-## セットアップと実行
+## 🛠️ 開発・デバッグ
 
 ### 開発サーバー起動
 ```bash
 ng serve
 ```
-ブラウザで `http://localhost:4200/` にアクセス
 
 ### ビルド
 ```bash
 ng build
 ```
 
-### 使用方法
-1. アプリケーションを開く
-2. 「カメラを開始」ボタンをクリック
-3. カメラ許可を承認
-4. 「写真を撮る」ボタンで撮影
-5. AWS Lambda関数のURLを入力
-6. 「文字認識実行」ボタンで処理開始
-7. 抽出されたテキストを確認
+### エラー確認
+ブラウザの開発者ツールでコンソールログを確認：
+```typescript
+console.error('Textract処理エラー:', error);
+```
 
-## 必要な権限
+## 🚀 本番デプロイ
 
-- **カメラアクセス**: `navigator.mediaDevices.getUserMedia()`
-- **HTTPS**: 本番環境ではHTTPS必須（localhost除く）
+### 環境変数設定例（Vercel）
+```bash
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=wJalr...
+AWS_REGION=ap-northeast-2
+```
 
-## 対応ブラウザ
+### 環境変数設定例（Netlify）
+サイト設定 → Environment variables で設定
 
-- Chrome 53+
-- Firefox 36+
-- Safari 11+
-- Edge 79+
+## 📝 ライセンス
 
-## AWS Lambda設定要件
+MIT License
 
-Lambda関数は以下を満たす必要があります：
-- **HTTPSエンドポイント**
-- **CORS設定**: ブラウザからのリクエスト許可
-- **multipart/form-data**: ファイルアップロード対応
-- **OCRライブラリ**: Tesseract, AWS Textract等
+## 🤝 コントリビューション
 
-## 制限事項
+1. フォークしてください
+2. フィーチャーブランチを作成してください (`git checkout -b feature/amazing-feature`)
+3. 変更をコミットしてください (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュしてください (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成してください
 
-- 1度に1枚の画像のみ処理
-- 画像形式：JPEG固定
-- ファイルサイズ：Lambda関数の制限に依存
-- ネットワーク：インターネット接続必須
+## 📞 サポート
 
-## トラブルシューティング
+問題や質問がございましたら、Issueを作成してください。
 
-### カメラが起動しない
-- ブラウザのカメラ許可を確認
-- HTTPSでアクセスしているか確認（localhost除く）
-- 他のアプリケーションがカメラを使用していないか確認
+---
 
-### Lambda送信エラー
-- URLが正しいか確認
-- Lambda関数のCORS設定を確認
-- ネットワーク接続を確認
-
-### 文字認識精度向上
-- 明るい環境で撮影
-- 文字がはっきり見えるよう距離調整
-- 手ブレを避ける
+**⚠️ 注意**: 実際のAWS認証情報をコードにハードコーディングしないでください。必ず環境変数を使用してください。
