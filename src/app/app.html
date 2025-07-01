@@ -114,14 +114,14 @@
     <section class="serial-numbers" *ngIf="extractedSerialNumbers.length > 0">
       <h2>抽出されたシリアル番号</h2>
       <div class="serial-number-list">
-        <div 
-          *ngFor="let item of extractedSerialNumbers; let i = index" 
+        <div
+          *ngFor="let item of extractedSerialNumbers; let i = index"
           class="serial-number-item"
           [class.selected]="selectedSerialNumber === item.serialNumber">
           <div class="serial-info">
             <span class="serial-display">画像{{ item.imageIndex + 1 }}: {{ item.serialNumber }}</span>
           </div>
-          <button 
+          <button
             (click)="selectSerialNumber(item.serialNumber)"
             class="btn btn-sm btn-select"
             [disabled]="selectedSerialNumber === item.serialNumber">

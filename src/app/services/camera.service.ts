@@ -163,7 +163,7 @@ export class CameraService {
 
       return await response.json();
     } catch (error) {
-      console.error('Lambda関数への送信に失敗しました:', error);
+      console.error('送信に失敗しました:', error);
       throw error;
     }
   }
