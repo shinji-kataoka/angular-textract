@@ -46,6 +46,7 @@ npm install
 
 ### 3. AWS認証情報の設定
 
+#### ローカル開発用
 環境設定ファイルを作成：
 ```bash
 cp src/environments/environment.example.ts src/environments/environment.ts
@@ -62,6 +63,12 @@ export const environment = {
   }
 };
 ```
+
+#### Amplify本番環境用
+Amplifyコンソールで以下の環境変数を設定：
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
 
 ### 4. アプリケーションの起動
 ```bash

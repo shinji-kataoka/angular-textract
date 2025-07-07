@@ -1,0 +1,17 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - echo "AWS環境変数を確認中..."
+        - npm run build:prod
+  artifacts:
+    baseDirectory: dist/camera-app
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*

@@ -1,3 +1,6 @@
+// ローカル開発用の環境設定ファイル例
+// このファイルをコピーして environment.ts を作成し、
+// 実際のAWS認証情報を設定してください
 export const environment = {
   production: false,
   aws: {
